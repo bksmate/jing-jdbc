@@ -1,0 +1,11 @@
+# igonre out directory
+/out/
+
+# igonre log directory
+/log/
+
+# igonre log directory
+/logs/
+
+# igonre temp directory
+/temp/

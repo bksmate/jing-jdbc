@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<jing>
+    <!-- 加载JDBC映射集, 没有用到JDBC就不用填. -->
+    <init>
+        <index>2</index>
+        <implements>org.jing.jdbc.lang.JDBCInit</implements>
+        <parameters>
+            <path>config?jing-jdbc.xml</path>
+        </parameters>
+    </init>
+</jing>

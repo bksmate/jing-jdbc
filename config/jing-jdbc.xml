@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<jing>
+    <connection>
+        <sign>local</sign>
+        <url>jdbc:oracle:thin:@localhost:1521:orcl</url>
+        <name>C##JING</name>
+        <password>FARMER</password>
+        <driver>oracle.jdbc.driver.OracleDriver</driver>
+        <type>COMM</type>
+        <schema></schema>
+        <autoCommit></autoCommit>
+    </connection>
+    <connection>
+        <sign>mysql</sign>
+        <url>jdbc:mysql://localhost:3306/jing?serverTimezone=UTC</url>
+        <name>jing</name>
+        <password>6661726d6572==</password>
+        <driver>com.mysql.cj.jdbc.Driver</driver>
+        <type>COMM</type>
+        <encrypt>X16</encrypt>
+        <schema></schema>
+        <autoCommit></autoCommit>
+    </connection>
+</jing>

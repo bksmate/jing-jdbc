@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Class-Path: jing-core-1.22.jar dom4j-2.0.2.jar
+Main-Class: test.Demo4X16
+

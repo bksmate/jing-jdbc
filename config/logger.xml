@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<jing>
+    <!-- root level -->
+    <root-level>ALL</root-level>
+    <stdout-level>ALL</stdout-level>
+    <!-- extra level implements -->
+    <!--<impl>org.jing.core.logger.JingLoggerLevelExtend</impl>-->
+    <!-- check if need stdout ignoring case, default true -->
+    <stdout>true</stdout>
+    <!-- global date format -->
+    <date-format>yyyy-MM-dd HH:mm:ss SSS</date-format>
+    <!-- global encoding -->
+    <encoding>UTF-8</encoding>
+    <!-- global logger format -->
+    <format>[%d][%t][%N->>-%M->>-%l][%p] - %m%n</format>
+    <logger>
+        <name>ALL</name>
+        <appender>file-jing</appender>
+        <!-- special date format -->
+        <!--<date-format>yyyy-MM-dd HH:mm:ss SSS</date-format>-->
+        <!-- special encoding -->
+        <!--<encoding>UTF-8</encoding>-->
+        <!-- special logger format -->
+        <!--<format>[%d][%t][%N->>-%M->>-%l][%p] - %m%n</format>-->
+    </logger>
+    <logger>
+        <name>TRACE</name>
+        <appender>file-jing</appender>
+    </logger>
+    <logger>
+        <name>DEBUG</name>
+        <appender>file-jing</appender>
+    </logger>
+    <logger>
+        <name>INFO</name>
+        <appender>file-jing</appender>
+    </logger>
+    <logger>
+        <name>WARN</name>
+        <appender>file-jing</appender>
+    </logger>
+    <logger>
+        <name>ERROR</name>
+        <appender>file-jing</appender>
+        <appender>file-err</appender>
+    </logger>
+    <logger>
+        <name>IMP</name>
+        <appender>file-jing</appender>
+    </logger>
+    <logger>
+        <name>SQL</name>
+        <appender>file-sql</appender>
+        <appender>file-daily</appender>
+    </logger>
+    <logger>
+        <name>FATAL</name>
+        <appender>file-jing</appender>
+    </logger>
+    <appender>
+        <name>file-jing</name>
+        <impl>org.jing.core.logger.appender.FileAppender</impl>
+        <param>
+            <file>logs/jing.log</file>
+        </param>
+    </appender>
+    <appender>
+        <name>file-sql</name>
+        <impl>org.jing.core.logger.appender.FileDailyAppender</impl>
+        <param>
+            <file>logs/sql.log</file>
+            <!-- 备份日志的时间格式 -->
+            <date-format>yyyyMMdd</date-format>
+            <!-- 间隔多久, 单位: 天 -->
+            <times>1</times>
+        </param>
+    </appender>
+    <appender>
+        <name>file-daily</name>
+        <impl>org.jing.core.logger.appender.FileDailyAppender</impl>
+        <param>
+            <file>logs/daily.log</file>
+            <!-- 备份日志的时间格式 -->
+            <date-format>yyyyMMdd</date-format>
+            <!-- 间隔多久, 单位: 天 -->
+            <times>1</times>
+        </param>
+    </appender>
+    <appender>
+        <name>file-err</name>
+        <impl>org.jing.core.logger.appender.FileAppender</impl>
+        <param>
+            <file>logs/err.log</file>
+        </param>
+    </appender>
+</jing>
