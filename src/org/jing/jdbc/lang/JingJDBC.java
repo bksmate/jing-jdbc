@@ -34,7 +34,7 @@ public class JingJDBC {
 
     public static JingJDBC getJDBC(String sign) throws JingException {
         if (null == connectionMap.get()) {
-            connectionMap.set(new HashMap<>());
+            connectionMap.set(new HashMap<String, JingJDBC>());
         }
         if (!connectionMap.get().containsKey(sign)) {
             connectionMap.get().put(sign, createJDBC(sign));
