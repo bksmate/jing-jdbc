@@ -31,4 +31,10 @@ public class Security {
         }
         return new String(buffer);
     }
+
+    public static void checkEZSqlInject(String text) throws JingException {
+        if (!text.matches("[a-zA-Z0-9_]*")) {
+            throw new JingException("Found SQL Inject: " + text);
+        }
+    }
 }

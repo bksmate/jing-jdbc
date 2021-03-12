@@ -1,6 +1,5 @@
 package org.jing.jdbc.lang;
 
-import org.jing.core.lang.JingException;
 import org.jing.core.logger.JingLogger;
 import org.jing.core.util.GenericUtil;
 import org.jing.core.util.StringUtil;
@@ -32,7 +31,7 @@ public class JingJDBC {
 
     private org.jing.jdbc.lang.Connection connectionDTO;
 
-    public static JingJDBC getJDBC(String sign) throws JingException {
+    public static JingJDBC getJDBC(String sign) throws JingJDBCException {
         if (null == connectionMap.get()) {
             connectionMap.set(new HashMap<String, JingJDBC>());
         }
@@ -56,32 +55,32 @@ public class JingJDBC {
         super.finalize();
     }
 
-    private static JingJDBC createJDBC(String sign) throws JingException {
+    private static JingJDBC createJDBC(String sign) throws JingJDBCException {
         org.jing.jdbc.lang.Connection conn = JDBCInit.getConnectionBySign(sign);
         if (null == conn) {
-            throw new JingException("Invalid sign : {}", sign);
+            throw new JingJDBCException("Invalid sign : {}", sign);
         }
         return new JingJDBC(conn);
     }
 
-    private synchronized void validate() throws JingException {
+    private synchronized void validate() throws JingJDBCException {
         if (null == connection) {
             openNewSession();
         }
     }
 
-    public void open() throws JingException {
+    public void open() throws JingJDBCException {
         try {
             if (null == connection || connection.isClosed()) {
                 openNewSession();
             }
         }
         catch (Exception e) {
-            throw new JingException(e);
+            throw new JingJDBCException(e);
         }
     }
 
-    public void openNewSession() throws JingException {
+    public void openNewSession() throws JingJDBCException {
         try {
             if (null != connection && !connection.isClosed()) {
                 close();
@@ -111,7 +110,7 @@ public class JingJDBC {
                 connection = DriverManager.getConnection(url + "?user=" + name + "&password=" + password + "&" + extra);
             }
             else {
-                throw new JingException("Unknown Connection type");
+                throw new JingJDBCException("Unknown Connection type");
             }
             connection.setAutoCommit(connectionDTO.isAutoCommit());
             String schema = connectionDTO.getSchema();
@@ -123,11 +122,11 @@ public class JingJDBC {
                 connectionDTO.getSign(), type.getValue());
         }
         catch (Exception e) {
-            throw new JingException(e);
+            throw new JingJDBCException(e);
         }
     }
 
-    public void setAutoCommit(boolean autoCommit) throws JingException {
+    public void setAutoCommit(boolean autoCommit) throws JingJDBCException {
         try {
             if (!connection.isClosed()) {
                 LOGGER.sqlWithHash(connection, "Set autoCommit: {}", autoCommit);
@@ -136,12 +135,12 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e);
+            throw new JingJDBCException(e);
         }
-        throw new JingException("Connection closed");
+        throw new JingJDBCException("Connection closed");
     }
 
-    public void commit() throws JingException {
+    public void commit() throws JingJDBCException {
         try {
             if (!connection.isClosed()) {
                 LOGGER.sqlWithHash(connection, "Commit.");
@@ -150,12 +149,12 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e);
+            throw new JingJDBCException(e);
         }
-        throw new JingException("Connection closed");
+        throw new JingJDBCException("Connection closed");
     }
 
-    public void rollback() throws JingException {
+    public void rollback() throws JingJDBCException {
         try {
             if (!connection.isClosed()) {
                 LOGGER.sqlWithHash(connection, "Rollback.");
@@ -164,12 +163,12 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e);
+            throw new JingJDBCException(e);
         }
-        throw new JingException("Connection closed");
+        throw new JingJDBCException("Connection closed");
     }
 
-    public void close() throws JingException {
+    public void close() throws JingJDBCException {
         try {
             if (!connection.isClosed()) {
                 LOGGER.sqlWithHash(connection, "Close.");
@@ -177,11 +176,11 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e);
+            throw new JingJDBCException(e);
         }
     }
 
-    public void release() throws JingException {
+    public void release() throws JingJDBCException {
         try {
             if (!connection.isClosed()) {
                 LOGGER.sqlWithHash(connection, "Release.");
@@ -190,12 +189,12 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e);
+            throw new JingJDBCException(e);
         }
     }
 
     /* Query */
-    public ArrayList<HashMap<String, String>> qryWithList(boolean recordSql, String sql, List<Object> parameters) throws JingException {
+    public ArrayList<HashMap<String, String>> qryWithList(boolean recordSql, String sql, List<Object> parameters) throws JingJDBCException {
         validate();
         ArrayList<HashMap<String, String>> retList = null;
         String parameterString = null;
@@ -236,20 +235,20 @@ public class JingJDBC {
         }
         catch (Exception e) {
             if (StringUtil.isEmpty(parameterString)) {
-                throw new JingException(e, "[Session: {}] Failed to Query. [sql: {}]", connection.hashCode(), sql);
+                throw new JingJDBCException(e, "[Session: {}] Failed to Query. [sql: {}]", connection.hashCode(), sql);
             }
             else {
-                throw new JingException(e, "[Session: {}] Failed to Query. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
+                throw new JingJDBCException(e, "[Session: {}] Failed to Query. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
             }
         }
         return retList;
     }
 
-    public ArrayList<HashMap<String, String>> qryWithList(String sql, List<Object> parameters) throws JingException {
+    public ArrayList<HashMap<String, String>> qryWithList(String sql, List<Object> parameters) throws JingJDBCException {
         return qryWithList(true, sql, parameters);
     }
 
-    public ArrayList<HashMap<String, String>> qry(boolean recordSql, String sql, Object... parameters) throws JingException {
+    public ArrayList<HashMap<String, String>> qry(boolean recordSql, String sql, Object... parameters) throws JingJDBCException {
         validate();
         String parameterString = null;
         try (
@@ -291,24 +290,24 @@ public class JingJDBC {
         }
         catch (Exception e) {
             if (StringUtil.isEmpty(parameterString)) {
-                throw new JingException(e, "[Session: {}] Failed to Query. [sql: {}]", connection.hashCode(), sql);
+                throw new JingJDBCException(e, "[Session: {}] Failed to Query. [sql: {}]", connection.hashCode(), sql);
             }
             else {
-                throw new JingException(e, "[Session: {}] Failed to Query. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
+                throw new JingJDBCException(e, "[Session: {}] Failed to Query. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
             }
         }
     }
 
-    public ArrayList<HashMap<String, String>> qry(String sql, Object... parameters) throws JingException {
+    public ArrayList<HashMap<String, String>> qry(String sql, Object... parameters) throws JingJDBCException {
         return qry(true, sql, parameters);
     }
 
-    public ArrayList<HashMap<String, String>> qry(String sql) throws JingException {
+    public ArrayList<HashMap<String, String>> qry(String sql) throws JingJDBCException {
         return qry(true, sql);
     }
 
     /* Update */
-    public int update(boolean recordSql, String sql, List<Object> parameters) throws JingException {
+    public int update(boolean recordSql, String sql, List<Object> parameters) throws JingJDBCException {
         validate();
         String parameterString = null;
         try (
@@ -331,19 +330,19 @@ public class JingJDBC {
         }
         catch (Exception e) {
             if (StringUtil.isEmpty(parameterString)) {
-                throw new JingException(e, "[Session: {}] Failed to Update. [sql: {}]", connection.hashCode(), sql);
+                throw new JingJDBCException(e, "[Session: {}] Failed to Update. [sql: {}]", connection.hashCode(), sql);
             }
             else {
-                throw new JingException(e, "[Session: {}] Failed to Update. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
+                throw new JingJDBCException(e, "[Session: {}] Failed to Update. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
             }
         }
     }
 
-    public int update(String sql, List<Object> parameters) throws JingException {
+    public int update(String sql, List<Object> parameters) throws JingJDBCException {
         return update(true, sql, parameters);
     }
 
-    public int update(boolean recordSql, String sql, Object... parameters) throws JingException {
+    public int update(boolean recordSql, String sql, Object... parameters) throws JingJDBCException {
         validate();
         String parameterString = null;
         try (
@@ -366,24 +365,24 @@ public class JingJDBC {
         }
         catch (Exception e) {
             if (StringUtil.isEmpty(parameterString)) {
-                throw new JingException(e, "[Session: {}] Failed to Update. [sql: {}]", connection.hashCode(), sql);
+                throw new JingJDBCException(e, "[Session: {}] Failed to Update. [sql: {}]", connection.hashCode(), sql);
             }
             else {
-                throw new JingException(e, "[Session: {}] Failed to Update. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
+                throw new JingJDBCException(e, "[Session: {}] Failed to Update. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
             }
         }
     }
 
-    public int update(String sql, Object... parameters) throws JingException {
+    public int update(String sql, Object... parameters) throws JingJDBCException {
         return update(true, sql, parameters);
     }
 
-    public int update(String sql) throws JingException {
+    public int update(String sql) throws JingJDBCException {
         return update(true, sql);
     }
 
     /* Batch Update */
-    public long batchUpdate(String sql, List<Object[]> parameters) throws JingException {
+    public long batchUpdate(String sql, List<Object[]> parameters) throws JingJDBCException {
         validate();
         long resLong = 0;
         try (
@@ -406,13 +405,13 @@ public class JingJDBC {
             LOGGER.sqlWithHash(connection, "{} rows affected.", resLong);
         }
         catch (Exception e) {
-            throw new JingException(e, "[Session: {}] Failed to Batch Update. [sql: {}]", connection.hashCode(), sql);
+            throw new JingJDBCException(e, "[Session: {}] Failed to Batch Update. [sql: {}]", connection.hashCode(), sql);
         }
         return resLong;
     }
 
     /* Execute */
-    public void execute(String sql) throws JingException {
+    public void execute(String sql) throws JingJDBCException {
         validate();
         try (
             Statement statement = connection.createStatement()
@@ -421,11 +420,11 @@ public class JingJDBC {
             statement.execute(sql);
         }
         catch (Exception e) {
-            throw new JingException(e, "[session: {}] Failed to Update. [sql: {}][{}]", connection.hashCode(), sql);
+            throw new JingJDBCException(e, "[session: {}] Failed to Update. [sql: {}][{}]", connection.hashCode(), sql);
         }
     }
 
-    private String setParameters(PreparedStatement ps, boolean recordSql, Object... parameters) throws JingException {
+    private String setParameters(PreparedStatement ps, boolean recordSql, Object... parameters) throws JingJDBCException {
         StringBuilder stbr = new StringBuilder();
         try {
             if (null != parameters) {
@@ -458,12 +457,12 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e);
+            throw new JingJDBCException(e);
         }
         return stbr.toString();
     }
 
-    private String setParameters(PreparedStatement ps, boolean recordSql, List<Object> parameters) throws JingException {
+    private String setParameters(PreparedStatement ps, boolean recordSql, List<Object> parameters) throws JingJDBCException {
         StringBuilder stbr = new StringBuilder();
         try {
             if (null != parameters) {
@@ -496,7 +495,7 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e);
+            throw new JingJDBCException(e);
         }
         return stbr.toString();
     }
@@ -510,7 +509,7 @@ public class JingJDBC {
         return sum;
     }
 
-    /*public long batchUpdate(String sql, List<Pair2<Class<?>, ?>[]> parameters) throws JingException {
+    /*public long batchUpdate(String sql, List<Pair2<Class<?>, ?>[]> parameters) throws JingJDBCException {
         long resLong = 0;
         try (
             PreparedStatement ps = connection.prepareStatement(sql)
@@ -532,12 +531,12 @@ public class JingJDBC {
             LOGGER.sql("{} rows affected.", connection.hashCode(), resLong);
         }
         catch (Exception e) {
-            throw new JingException(e, String.format("[Session: {}] Failed to Batch Update. [sql: {}]", connection.hashCode(), sql));
+            throw new JingJDBCException(e, String.format("[Session: {}] Failed to Batch Update. [sql: {}]", connection.hashCode(), sql));
         }
         return resLong;
     }
 
-    public long batchUpdateByOrigTypes(String sql, List<Object[]> parameters) throws JingException {
+    public long batchUpdateByOrigTypes(String sql, List<Object[]> parameters) throws JingJDBCException {
         long resLong = 0;
         try (
             PreparedStatement ps = connection.prepareStatement(sql)
@@ -559,20 +558,20 @@ public class JingJDBC {
             LOGGER.sql("{} rows affected.", connection.hashCode(), resLong);
         }
         catch (Exception e) {
-            throw new JingException(e, String.format("[Session: {}] Failed to Batch Update. [sql: {}]", connection.hashCode(), sql));
+            throw new JingJDBCException(e, String.format("[Session: {}] Failed to Batch Update. [sql: {}]", connection.hashCode(), sql));
         }
         return resLong;
     }*/
 
-    /*public int update(String sql, Pair2<Class<?>, ?>... parameters) throws JingException {
+    /*public int update(String sql, Pair2<Class<?>, ?>... parameters) throws JingJDBCException {
         return update(sql, true, parameters);
     }
 
-    public int update(String sql, List<Pair2<Class<?>, ?>> parameters) throws JingException {
+    public int update(String sql, List<Pair2<Class<?>, ?>> parameters) throws JingJDBCException {
         return update(sql, true, parameters);
     }
 
-    public int update(String sql, boolean recordSql, Pair2<Class<?>, ?>... parameters) throws JingException {
+    public int update(String sql, boolean recordSql, Pair2<Class<?>, ?>... parameters) throws JingJDBCException {
         int resInt = -1;
         PreparedStatement ps = null;
         String parameterString = "";
@@ -588,7 +587,7 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e, String
+            throw new JingJDBCException(e, String
                 .format("[Session: {}] Failed to Update. [sql: {}][{}]", connection.hashCode(), sql, parameterString));
         }
         finally {
@@ -607,7 +606,7 @@ public class JingJDBC {
         return resInt;
     }
 
-    public int update(String sql, boolean recordSql, List<Pair2<Class<?>, ?>> parameters) throws JingException {
+    public int update(String sql, boolean recordSql, List<Pair2<Class<?>, ?>> parameters) throws JingJDBCException {
         int resInt = -1;
         PreparedStatement ps = null;
         String parameterString = "";
@@ -623,7 +622,7 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e, String
+            throw new JingJDBCException(e, String
                 .format("[Session: {}] Failed to Update. [sql: {}][{}]", connection.hashCode(), sql, parameterString));
         }
         finally {
@@ -642,7 +641,7 @@ public class JingJDBC {
         return resInt;
     }
 
-    public int updateByOrigTypes(String sql, boolean recordSql, Object... parameters) throws JingException {
+    public int updateByOrigTypes(String sql, boolean recordSql, Object... parameters) throws JingJDBCException {
         int resInt = -1;
         PreparedStatement ps = null;
         String parameterString = "";
@@ -658,7 +657,7 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e, String
+            throw new JingJDBCException(e, String
                 .format("[Session: {}] Failed to Update. [sql: {}][{}]", connection.hashCode(), sql, parameterString));
         }
         finally {
@@ -677,7 +676,7 @@ public class JingJDBC {
         return resInt;
     }
 
-    public int updateByOrigTypes(String sql, boolean recordSql, List<Object> parameters) throws JingException {
+    public int updateByOrigTypes(String sql, boolean recordSql, List<Object> parameters) throws JingJDBCException {
         int resInt = -1;
         PreparedStatement ps = null;
         String parameterString = "";
@@ -693,7 +692,7 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e, String
+            throw new JingJDBCException(e, String
                 .format("[Session: {}] Failed to Update. [sql: {}][{}]", connection.hashCode(), sql, parameterString));
         }
         finally {
@@ -712,7 +711,7 @@ public class JingJDBC {
         return resInt;
     }*/
 
-    /*private String setParameters(PreparedStatement ps, boolean recordSql, List<Pair2<Class<?>, ?>> parameters) throws JingException {
+    /*private String setParameters(PreparedStatement ps, boolean recordSql, List<Pair2<Class<?>, ?>> parameters) throws JingJDBCException {
         StringBuilder stbr = new StringBuilder();
         try {
             if (null != parameters) {
@@ -743,12 +742,12 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e);
+            throw new JingJDBCException(e);
         }
         return stbr.toString();
     }*/
 
-    /*private String setParameters(PreparedStatement ps, boolean recordSql, Pair2<Class<?>, ?>... parameters) throws JingException {
+    /*private String setParameters(PreparedStatement ps, boolean recordSql, Pair2<Class<?>, ?>... parameters) throws JingJDBCException {
         StringBuilder stbr = new StringBuilder();
         try {
             if (null != parameters) {
@@ -779,13 +778,13 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e);
+            throw new JingJDBCException(e);
         }
         return stbr.toString();
     }*/
 
     /*
-    public ArrayList<HashMap<String, String>> qryByOrigTypes(String sql,  boolean recordSql, Object... parameters) throws JingException {
+    public ArrayList<HashMap<String, String>> qryByOrigTypes(String sql,  boolean recordSql, Object... parameters) throws JingJDBCException {
         ArrayList<HashMap<String, String>> retList = null;
         PreparedStatement ps = null;
         String parameterString = "";
@@ -819,7 +818,7 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e, "[Session: {}] Failed to Query. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
+            throw new JingJDBCException(e, "[Session: {}] Failed to Query. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
         }
         finally {
             if (null != ps) {
@@ -837,7 +836,7 @@ public class JingJDBC {
         return retList;
     }
 
-    public ArrayList<HashMap<String, String>> qryByOrigTypes(String sql,  boolean recordSql, List<Object> parameters) throws JingException {
+    public ArrayList<HashMap<String, String>> qryByOrigTypes(String sql,  boolean recordSql, List<Object> parameters) throws JingJDBCException {
         ArrayList<HashMap<String, String>> retList = null;
         PreparedStatement ps = null;
         String parameterString = "";
@@ -871,7 +870,7 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e, String
+            throw new JingJDBCException(e, String
                 .format("[Session: {}] Failed to Query. [sql: {}][{}]", connection.hashCode(), sql, parameterString));
         }
         finally {
@@ -890,7 +889,7 @@ public class JingJDBC {
         return retList;
     }*/
 
-    /*private String setParametersByOrigTypes(PreparedStatement ps, boolean recordSql, Object... parameters) throws JingException {
+    /*private String setParametersByOrigTypes(PreparedStatement ps, boolean recordSql, Object... parameters) throws JingJDBCException {
         StringBuilder stbr = new StringBuilder();
         try {
             if (null != parameters) {
@@ -921,12 +920,12 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e);
+            throw new JingJDBCException(e);
         }
         return stbr.toString();
     }
 
-    private String setParametersByOrigTypes(PreparedStatement ps, boolean recordSql, List<Object> parameters) throws JingException {
+    private String setParametersByOrigTypes(PreparedStatement ps, boolean recordSql, List<Object> parameters) throws JingJDBCException {
         StringBuilder stbr = new StringBuilder();
         try {
             if (null != parameters) {
@@ -957,22 +956,22 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e);
+            throw new JingJDBCException(e);
         }
         return stbr.toString();
     }*/
 
     /*
 
-    public ArrayList<HashMap<String, String>> qry(String sql, Pair2<Class<?>, ?>... parameters) throws JingException {
+    public ArrayList<HashMap<String, String>> qry(String sql, Pair2<Class<?>, ?>... parameters) throws JingJDBCException {
         return qry(sql, true, parameters);
     }
 
-    public ArrayList<HashMap<String, String>> qry(String sql, List<Pair2<Class<?>, ?>> parameters) throws JingException {
+    public ArrayList<HashMap<String, String>> qry(String sql, List<Pair2<Class<?>, ?>> parameters) throws JingJDBCException {
         return qry(sql, true, parameters);
     }
 
-    public ArrayList<HashMap<String, String>> qry(String sql,  boolean recordSql, Pair2<Class<?>, ?>... parameters) throws JingException {
+    public ArrayList<HashMap<String, String>> qry(String sql,  boolean recordSql, Pair2<Class<?>, ?>... parameters) throws JingJDBCException {
         ArrayList<HashMap<String, String>> retList = null;
         PreparedStatement ps = null;
         String parameterString = "";
@@ -1006,7 +1005,7 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e, "[Session: {}] Failed to Query. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
+            throw new JingJDBCException(e, "[Session: {}] Failed to Query. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
         }
         finally {
             if (null != ps) {
@@ -1024,7 +1023,7 @@ public class JingJDBC {
         return retList;
     }
 
-    public ArrayList<HashMap<String, String>> qry(String sql, boolean recordSql, List<Pair2<Class<?>, ?>> parameters) throws JingException {
+    public ArrayList<HashMap<String, String>> qry(String sql, boolean recordSql, List<Pair2<Class<?>, ?>> parameters) throws JingJDBCException {
         ArrayList<HashMap<String, String>> retList = null;
         PreparedStatement ps = null;
         String parameterString = "";
@@ -1058,7 +1057,7 @@ public class JingJDBC {
             }
         }
         catch (Exception e) {
-            throw new JingException(e, "[Session: {}] Failed to Query. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
+            throw new JingJDBCException(e, "[Session: {}] Failed to Query. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
         }
         finally {
             if (null != ps) {
