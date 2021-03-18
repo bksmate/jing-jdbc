@@ -509,569 +509,90 @@ public class JingJDBC {
         return sum;
     }
 
-    /*public long batchUpdate(String sql, List<Pair2<Class<?>, ?>[]> parameters) throws JingJDBCException {
-        long resLong = 0;
+    /* Update */
+    public String updateAndGetGeneratedKeys(boolean recordSql, String sql, Object... parameters) throws JingJDBCException {
+        validate();
+        String parameterString = null;
+        try (
+            PreparedStatement ps = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)
+        ){
+            parameterString = setParameters(ps, recordSql, parameters);
+            if (recordSql) {
+                if (StringUtil.isEmpty(parameterString)) {
+                    LOGGER.sqlWithHash(connection, sql);
+                }
+                else {
+                    LOGGER.sqlWithHash(connection, sql, parameterString);
+                }
+            }
+            ArrayList<HashMap<String, String>> retList = null;
+            int resInt = ps.executeUpdate();
+            String resString = null;
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                resString = rs.getString(1);
+            }
+            if (recordSql) {
+                LOGGER.sqlWithHash(connection, "{} rows affected, generated key: [{}]", resInt, resString);
+            }
+            return resString;
+        }
+        catch (Exception e) {
+            if (StringUtil.isEmpty(parameterString)) {
+                throw new JingJDBCException(e, "[Session: {}] Failed to Update. [sql: {}]", connection.hashCode(), sql);
+            }
+            else {
+                throw new JingJDBCException(e, "[Session: {}] Failed to Update. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
+            }
+        }
+    }
+
+    public String updateAndGetGeneratedKeys(boolean recordSql, String sql, List<Object> parameters) throws JingJDBCException {
+        validate();
+        String parameterString = null;
         try (
             PreparedStatement ps = connection.prepareStatement(sql)
-        ) {
-            LOGGER.sql(sql, "BATCH_MOD", connection.hashCode());
-            int size = null == parameters ? 0 : parameters.size();
-            HashMap<String, String> row;
-            Pair2<Class<?>, ?>[] parameter;
-            for (int i$ = 0; i$ < size; i$++) {
-                parameter = parameters.get(i$);
-                setParameters(ps, false, parameter);
-                ps.addBatch();
-                if (i$ % 999 == 0) {
-                    resLong += sumAffectedRow(ps.executeBatch());
-                    ps.clearBatch();
-                }
-            }
-            resLong += sumAffectedRow(ps.executeBatch());
-            LOGGER.sql("{} rows affected.", connection.hashCode(), resLong);
-        }
-        catch (Exception e) {
-            throw new JingJDBCException(e, String.format("[Session: {}] Failed to Batch Update. [sql: {}]", connection.hashCode(), sql));
-        }
-        return resLong;
-    }
-
-    public long batchUpdateByOrigTypes(String sql, List<Object[]> parameters) throws JingJDBCException {
-        long resLong = 0;
-        try (
-            PreparedStatement ps = connection.prepareStatement(sql)
-        ) {
-            LOGGER.sql(sql, "BATCH_MOD", connection.hashCode());
-            int size = null == parameters ? 0 : parameters.size();
-            HashMap<String, String> row;
-            Object[] parameter;
-            for (int i$ = 0; i$ < size; i$++) {
-                parameter = parameters.get(i$);
-                setParametersByOrigTypes(ps, false, parameter);
-                ps.addBatch();
-                if (i$ % 999 == 0) {
-                    resLong += sumAffectedRow(ps.executeBatch());
-                    ps.clearBatch();
-                }
-            }
-            resLong += sumAffectedRow(ps.executeBatch());
-            LOGGER.sql("{} rows affected.", connection.hashCode(), resLong);
-        }
-        catch (Exception e) {
-            throw new JingJDBCException(e, String.format("[Session: {}] Failed to Batch Update. [sql: {}]", connection.hashCode(), sql));
-        }
-        return resLong;
-    }*/
-
-    /*public int update(String sql, Pair2<Class<?>, ?>... parameters) throws JingJDBCException {
-        return update(sql, true, parameters);
-    }
-
-    public int update(String sql, List<Pair2<Class<?>, ?>> parameters) throws JingJDBCException {
-        return update(sql, true, parameters);
-    }
-
-    public int update(String sql, boolean recordSql, Pair2<Class<?>, ?>... parameters) throws JingJDBCException {
-        int resInt = -1;
-        PreparedStatement ps = null;
-        String parameterString = "";
-        try {
-            ps = connection.prepareStatement(sql);
+        ){
             parameterString = setParameters(ps, recordSql, parameters);
             if (recordSql) {
-                LOGGER.sql(sql, parameterString, connection.hashCode());
+                if (StringUtil.isEmpty(parameterString)) {
+                    LOGGER.sqlWithHash(connection, sql);
+                }
+                else {
+                    LOGGER.sqlWithHash(connection, sql, parameterString);
+                }
             }
-            resInt = ps.executeUpdate();
+            ArrayList<HashMap<String, String>> retList = null;
+            int resInt = ps.executeUpdate();
+            String resString = null;
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                resString = rs.getString(1);
+            }
             if (recordSql) {
-                LOGGER.sql("{} rows affected.", connection.hashCode(), resInt);
+                LOGGER.sqlWithHash(connection, "{} rows affected, generated key: [{}]", resInt, resString);
             }
+            return resString;
         }
         catch (Exception e) {
-            throw new JingJDBCException(e, String
-                .format("[Session: {}] Failed to Update. [sql: {}][{}]", connection.hashCode(), sql, parameterString));
-        }
-        finally {
-            if (null != ps) {
-                try {
-                    ps.close();
-                }
-                catch (Exception e) {
-                    LOGGER.error(e);
-                }
-                finally {
-                    ps = null;
-                }
+            if (StringUtil.isEmpty(parameterString)) {
+                throw new JingJDBCException(e, "[Session: {}] Failed to Update. [sql: {}]", connection.hashCode(), sql);
+            }
+            else {
+                throw new JingJDBCException(e, "[Session: {}] Failed to Update. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
             }
         }
-        return resInt;
     }
 
-    public int update(String sql, boolean recordSql, List<Pair2<Class<?>, ?>> parameters) throws JingJDBCException {
-        int resInt = -1;
-        PreparedStatement ps = null;
-        String parameterString = "";
-        try {
-            ps = connection.prepareStatement(sql);
-            parameterString = setParameters(ps, recordSql, parameters);
-            if (recordSql) {
-                LOGGER.sql(sql, parameterString, connection.hashCode());
-            }
-            resInt = ps.executeUpdate();
-            if (recordSql) {
-                LOGGER.sql("{} rows affected.", connection.hashCode(), resInt);
-            }
-        }
-        catch (Exception e) {
-            throw new JingJDBCException(e, String
-                .format("[Session: {}] Failed to Update. [sql: {}][{}]", connection.hashCode(), sql, parameterString));
-        }
-        finally {
-            if (null != ps) {
-                try {
-                    ps.close();
-                }
-                catch (Exception e) {
-                    LOGGER.error(e);
-                }
-                finally {
-                    ps = null;
-                }
-            }
-        }
-        return resInt;
+    public String updateAndGetGeneratedKeys(String sql, List<Object> parameters) throws JingJDBCException {
+        return updateAndGetGeneratedKeys(true, sql, parameters);
     }
 
-    public int updateByOrigTypes(String sql, boolean recordSql, Object... parameters) throws JingJDBCException {
-        int resInt = -1;
-        PreparedStatement ps = null;
-        String parameterString = "";
-        try {
-            ps = connection.prepareStatement(sql);
-            parameterString = setParametersByOrigTypes(ps, recordSql, parameters);
-            if (recordSql) {
-                LOGGER.sql(sql, parameterString, connection.hashCode());
-            }
-            resInt = ps.executeUpdate();
-            if (recordSql) {
-                LOGGER.sql("{} rows affected.", connection.hashCode(), resInt);
-            }
-        }
-        catch (Exception e) {
-            throw new JingJDBCException(e, String
-                .format("[Session: {}] Failed to Update. [sql: {}][{}]", connection.hashCode(), sql, parameterString));
-        }
-        finally {
-            if (null != ps) {
-                try {
-                    ps.close();
-                }
-                catch (Exception e) {
-                    LOGGER.error(e);
-                }
-                finally {
-                    ps = null;
-                }
-            }
-        }
-        return resInt;
+    public String updateAndGetGeneratedKeys(String sql, Object... parameters) throws JingJDBCException {
+        return updateAndGetGeneratedKeys(true, sql, parameters);
     }
 
-    public int updateByOrigTypes(String sql, boolean recordSql, List<Object> parameters) throws JingJDBCException {
-        int resInt = -1;
-        PreparedStatement ps = null;
-        String parameterString = "";
-        try {
-            ps = connection.prepareStatement(sql);
-            parameterString = setParametersByOrigTypes(ps, recordSql, parameters);
-            if (recordSql) {
-                LOGGER.sql(sql, parameterString, connection.hashCode());
-            }
-            resInt = ps.executeUpdate();
-            if (recordSql) {
-                LOGGER.sql("{} rows affected.", connection.hashCode(), resInt);
-            }
-        }
-        catch (Exception e) {
-            throw new JingJDBCException(e, String
-                .format("[Session: {}] Failed to Update. [sql: {}][{}]", connection.hashCode(), sql, parameterString));
-        }
-        finally {
-            if (null != ps) {
-                try {
-                    ps.close();
-                }
-                catch (Exception e) {
-                    LOGGER.error(e);
-                }
-                finally {
-                    ps = null;
-                }
-            }
-        }
-        return resInt;
-    }*/
-
-    /*private String setParameters(PreparedStatement ps, boolean recordSql, List<Pair2<Class<?>, ?>> parameters) throws JingJDBCException {
-        StringBuilder stbr = new StringBuilder();
-        try {
-            if (null != parameters) {
-                int index = 0;
-                for (Pair2<Class<?>, ?> pair2 : parameters) {
-                    if (recordSql && index != 0) {
-                        stbr.append(", ");
-                    }
-                    if (recordSql) {
-                        stbr.append(pair2.getB());
-                    }
-                    if (pair2.getA() == Integer.class) {
-                        ps.setInt(++index, (Integer) pair2.getB());
-                    }
-                    else if (pair2.getA() == Long.class) {
-                        ps.setLong(++index, (Long) pair2.getB());
-                    }
-                    else if (pair2.getA() == Float.class) {
-                        ps.setFloat(++index, (Float) pair2.getB());
-                    }
-                    else if (pair2.getA() == Double.class) {
-                        ps.setDouble(++index, (Double) pair2.getB());
-                    }
-                    else {
-                        ps.setString(++index, String.valueOf(pair2.getB()));
-                    }
-                }
-            }
-        }
-        catch (Exception e) {
-            throw new JingJDBCException(e);
-        }
-        return stbr.toString();
-    }*/
-
-    /*private String setParameters(PreparedStatement ps, boolean recordSql, Pair2<Class<?>, ?>... parameters) throws JingJDBCException {
-        StringBuilder stbr = new StringBuilder();
-        try {
-            if (null != parameters) {
-                int index = 0;
-                for (Pair2<Class<?>, ?> pair2 : parameters) {
-                    if (recordSql && index != 0) {
-                        stbr.append(", ");
-                    }
-                    if (recordSql) {
-                        stbr.append(pair2.getB());
-                    }
-                    if (pair2.getA() == Integer.class) {
-                        ps.setInt(++index, (Integer) pair2.getB());
-                    }
-                    else if (pair2.getA() == Long.class) {
-                        ps.setLong(++index, (Long) pair2.getB());
-                    }
-                    else if (pair2.getA() == Float.class) {
-                        ps.setFloat(++index, (Float) pair2.getB());
-                    }
-                    else if (pair2.getA() == Double.class) {
-                        ps.setDouble(++index, (Double) pair2.getB());
-                    }
-                    else {
-                        ps.setString(++index, String.valueOf(pair2.getB()));
-                    }
-                }
-            }
-        }
-        catch (Exception e) {
-            throw new JingJDBCException(e);
-        }
-        return stbr.toString();
-    }*/
-
-    /*
-    public ArrayList<HashMap<String, String>> qryByOrigTypes(String sql,  boolean recordSql, Object... parameters) throws JingJDBCException {
-        ArrayList<HashMap<String, String>> retList = null;
-        PreparedStatement ps = null;
-        String parameterString = "";
-        try {
-            ps = connection.prepareStatement(sql);
-            parameterString = setParametersByOrigTypes(ps, recordSql, parameters);
-            if (recordSql) {
-                LOGGER.sql(sql, parameterString, connection.hashCode());
-            }
-            ResultSet rs = ps.executeQuery();
-            ResultSetMetaData rsmd = rs.getMetaData();
-            int count = rsmd.getColumnCount();
-            String[] colNames = new String[count];
-            for (int i$ = 0; i$ < count; i$++) {
-                colNames[i$] = rsmd.getColumnName(i$ + 1);
-            }
-            while (rs.next()) {
-                HashMap<String, String> row = new HashMap<String, String>();
-                String colName;
-                for (int i$ = 0; i$ < count; i$++) {
-                    colName = colNames[i$];
-                    row.put(colName, StringUtil.ifEmpty(rs.getString(colName)).trim());
-                }
-                if (null == retList) {
-                    retList = new ArrayList<HashMap<String, String>>();
-                }
-                retList.add(row);
-            }
-            if (recordSql) {
-                LOGGER.sql("{} rows selected.", connection.hashCode(), GenericUtil.countList(retList));
-            }
-        }
-        catch (Exception e) {
-            throw new JingJDBCException(e, "[Session: {}] Failed to Query. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
-        }
-        finally {
-            if (null != ps) {
-                try {
-                    ps.close();
-                }
-                catch (Exception e) {
-                    LOGGER.error(e);
-                }
-                finally {
-                    ps = null;
-                }
-            }
-        }
-        return retList;
+    public String updateAndGetGeneratedKeys(String sql) throws JingJDBCException {
+        return updateAndGetGeneratedKeys(true, sql);
     }
-
-    public ArrayList<HashMap<String, String>> qryByOrigTypes(String sql,  boolean recordSql, List<Object> parameters) throws JingJDBCException {
-        ArrayList<HashMap<String, String>> retList = null;
-        PreparedStatement ps = null;
-        String parameterString = "";
-        try {
-            ps = connection.prepareStatement(sql);
-            parameterString = setParametersByOrigTypes(ps, recordSql, parameters);
-            if (recordSql) {
-                LOGGER.sql(sql, parameterString, connection.hashCode());
-            }
-            ResultSet rs = ps.executeQuery();
-            ResultSetMetaData rsmd = rs.getMetaData();
-            int count = rsmd.getColumnCount();
-            String[] colNames = new String[count];
-            for (int i$ = 0; i$ < count; i$++) {
-                colNames[i$] = rsmd.getColumnName(i$ + 1);
-            }
-            while (rs.next()) {
-                HashMap<String, String> row = new HashMap<String, String>();
-                String colName;
-                for (int i$ = 0; i$ < count; i$++) {
-                    colName = colNames[i$];
-                    row.put(colName, StringUtil.ifEmpty(rs.getString(colName)).trim());
-                }
-                if (null == retList) {
-                    retList = new ArrayList<HashMap<String, String>>();
-                }
-                retList.add(row);
-            }
-            if (recordSql) {
-                LOGGER.sql("{} rows selected.", connection.hashCode(), GenericUtil.countList(retList));
-            }
-        }
-        catch (Exception e) {
-            throw new JingJDBCException(e, String
-                .format("[Session: {}] Failed to Query. [sql: {}][{}]", connection.hashCode(), sql, parameterString));
-        }
-        finally {
-            if (null != ps) {
-                try {
-                    ps.close();
-                }
-                catch (Exception e) {
-                    LOGGER.error(e);
-                }
-                finally {
-                    ps = null;
-                }
-            }
-        }
-        return retList;
-    }*/
-
-    /*private String setParametersByOrigTypes(PreparedStatement ps, boolean recordSql, Object... parameters) throws JingJDBCException {
-        StringBuilder stbr = new StringBuilder();
-        try {
-            if (null != parameters) {
-                int index = 0;
-                for (Object value : parameters) {
-                    if (recordSql && index != 0) {
-                        stbr.append(", ");
-                    }
-                    if (recordSql) {
-                        stbr.append(value);
-                    }
-                    if (value == Integer.class) {
-                        ps.setInt(++index, (Integer) value);
-                    }
-                    else if (value == Long.class) {
-                        ps.setLong(++index, (Long) value);
-                    }
-                    else if (value == Float.class) {
-                        ps.setFloat(++index, (Float) value);
-                    }
-                    else if (value == Double.class) {
-                        ps.setDouble(++index, (Double) value);
-                    }
-                    else {
-                        ps.setString(++index, String.valueOf(value));
-                    }
-                }
-            }
-        }
-        catch (Exception e) {
-            throw new JingJDBCException(e);
-        }
-        return stbr.toString();
-    }
-
-    private String setParametersByOrigTypes(PreparedStatement ps, boolean recordSql, List<Object> parameters) throws JingJDBCException {
-        StringBuilder stbr = new StringBuilder();
-        try {
-            if (null != parameters) {
-                int index = 0;
-                for (Object value : parameters) {
-                    if (recordSql && index != 0) {
-                        stbr.append(", ");
-                    }
-                    if (recordSql) {
-                        stbr.append(value);
-                    }
-                    if (value == Integer.class) {
-                        ps.setInt(++index, (Integer) value);
-                    }
-                    else if (value == Long.class) {
-                        ps.setLong(++index, (Long) value);
-                    }
-                    else if (value == Float.class) {
-                        ps.setFloat(++index, (Float) value);
-                    }
-                    else if (value == Double.class) {
-                        ps.setDouble(++index, (Double) value);
-                    }
-                    else {
-                        ps.setString(++index, String.valueOf(value));
-                    }
-                }
-            }
-        }
-        catch (Exception e) {
-            throw new JingJDBCException(e);
-        }
-        return stbr.toString();
-    }*/
-
-    /*
-
-    public ArrayList<HashMap<String, String>> qry(String sql, Pair2<Class<?>, ?>... parameters) throws JingJDBCException {
-        return qry(sql, true, parameters);
-    }
-
-    public ArrayList<HashMap<String, String>> qry(String sql, List<Pair2<Class<?>, ?>> parameters) throws JingJDBCException {
-        return qry(sql, true, parameters);
-    }
-
-    public ArrayList<HashMap<String, String>> qry(String sql,  boolean recordSql, Pair2<Class<?>, ?>... parameters) throws JingJDBCException {
-        ArrayList<HashMap<String, String>> retList = null;
-        PreparedStatement ps = null;
-        String parameterString = "";
-        try {
-            ps = connection.prepareStatement(sql);
-            parameterString = setParameters(ps, recordSql, parameters);
-            if (recordSql) {
-                LOGGER.sql(sql, parameterString, connection.hashCode());
-            }
-            ResultSet rs = ps.executeQuery();
-            ResultSetMetaData rsmd = rs.getMetaData();
-            int count = rsmd.getColumnCount();
-            String[] colNames = new String[count];
-            for (int i$ = 0; i$ < count; i$++) {
-                colNames[i$] = rsmd.getColumnName(i$ + 1);
-            }
-            while (rs.next()) {
-                HashMap<String, String> row = new HashMap<String, String>();
-                String colName;
-                for (int i$ = 0; i$ < count; i$++) {
-                    colName = colNames[i$];
-                    row.put(colName, StringUtil.ifEmpty(rs.getString(colName)).trim());
-                }
-                if (null == retList) {
-                    retList = new ArrayList<HashMap<String, String>>();
-                }
-                retList.add(row);
-            }
-            if (recordSql) {
-                LOGGER.sql("{} rows selected.", connection.hashCode(), GenericUtil.countList(retList));
-            }
-        }
-        catch (Exception e) {
-            throw new JingJDBCException(e, "[Session: {}] Failed to Query. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
-        }
-        finally {
-            if (null != ps) {
-                try {
-                    ps.close();
-                }
-                catch (Exception e) {
-                    LOGGER.error(e);
-                }
-                finally {
-                    ps = null;
-                }
-            }
-        }
-        return retList;
-    }
-
-    public ArrayList<HashMap<String, String>> qry(String sql, boolean recordSql, List<Pair2<Class<?>, ?>> parameters) throws JingJDBCException {
-        ArrayList<HashMap<String, String>> retList = null;
-        PreparedStatement ps = null;
-        String parameterString = "";
-        try {
-            ps = connection.prepareStatement(sql);
-            parameterString = setParameters(ps, recordSql, parameters);
-            if (recordSql) {
-                LOGGER.sql(sql, parameterString, connection.hashCode());
-            }
-            ResultSet rs = ps.executeQuery();
-            ResultSetMetaData rsmd = rs.getMetaData();
-            int count = rsmd.getColumnCount();
-            String[] colNames = new String[count];
-            for (int i$ = 0; i$ < count; i$++) {
-                colNames[i$] = rsmd.getColumnName(i$ + 1);
-            }
-            while (rs.next()) {
-                HashMap<String, String> row = new HashMap<String, String>();
-                String colName;
-                for (int i$ = 0; i$ < count; i$++) {
-                    colName = colNames[i$];
-                    row.put(colName, StringUtil.ifEmpty(rs.getString(colName)).trim());
-                }
-                if (null == retList) {
-                    retList = new ArrayList<HashMap<String, String>>();
-                }
-                retList.add(row);
-            }
-            if (recordSql) {
-                LOGGER.sql("{} rows selected.", connection.hashCode(), GenericUtil.countList(retList));
-            }
-        }
-        catch (Exception e) {
-            throw new JingJDBCException(e, "[Session: {}] Failed to Query. [sql: {}][{}]", connection.hashCode(), sql, parameterString);
-        }
-        finally {
-            if (null != ps) {
-                try {
-                    ps.close();
-                }
-                catch (Exception e) {
-                    LOGGER.error(e);
-                }
-                finally {
-                    ps = null;
-                }
-            }
-        }
-        return retList;
-    }*/
 }
